@@ -5,5 +5,6 @@ This module defines a custom graph.
 
 from agent.email_agent import app
 from agent.graph import graph
+from agent.orchestrator_worker import orchestrator_worker
 
-__all__ = ["graph", "app"]
+__all__ = ["graph", "app", "orchestrator_worker"]

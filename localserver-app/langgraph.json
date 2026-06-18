@@ -3,7 +3,8 @@
   "dependencies": ["."],
   "graphs": {
     "agent": "./src/agent/graph.py:graph",
-    "email_agent": "./src/agent/email_agent.py:app"
+    "email_agent": "./src/agent/email_agent.py:app",
+    "orchestrator_worker": "./src/agent/orchestrator_worker.py:orchestrator_worker"
   },
   "env": ".env",
   "image_distro": "wolfi"
