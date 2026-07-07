@@ -20,7 +20,11 @@ def load_web_page(url: str, bs_kwargs: dict | None = None) -> list[Document]:
     soup = bs4.BeautifulSoup(response.text, "html.parser", **(bs_kwargs or {}))
     return [Document(page_content=soup.get_text(), metadata={"source": url})]
 
-
+'''
+The following steps show you how to build a minimal agent with a retrieval tool that wraps your vector store.
+The agent decides when to search for documents relevant to a user question,
+passes retrieved documents and the user question to a model, and returns an answer.
+'''
 def build_rag_agent():
     # Limit parsing to the article body/title/header so navigation and footer
     # text do not pollute the retrieval index.
@@ -77,6 +81,29 @@ def build_rag_agent():
     )
     return create_agent(model=model, tools=tools, system_prompt=prompt)
 
+def run_rag_agent(agent_instance):
+    query = "What is task decomposition?"
+    # stream_events lets the demo print both model tokens and tool calls as
+    # they happen, making the agent's retrieval step visible.
+    stream = agent_instance.stream_events(
+        {"messages": [{"role": "user", "content": query}]},
+        version="v3",
+    )
+    for kind, item in stream.interleave("messages", "tool_calls"):
+        if kind == "messages":
+            for token in item.text:
+                print(token, end="", flush=True)
+        elif kind == "tool_calls":
+            print(f"\nTool call: {item.tool_name}({item.input})")
+            print(f"Tool result: {item.output}")
+
+    return stream.output
+
+'''
+Another common approach is a two-step chain, in which you always run a search, 
+potentially using the raw user query, and incorporate the result as context for a single LLM query. 
+This results in a single inference call per query, trading flexibility for reduced latency.
+'''
 def build_rag_chain():
     # Limit parsing to the article body/title/header so navigation and footer
     # text do not pollute the retrieval index.
@@ -130,24 +157,6 @@ def build_rag_chain():
         )
 
     return create_agent(model, tools=[], middleware=[prompt_with_context])
-
-def run_rag_agent(agent_instance):
-    query = "What is task decomposition?"
-    # stream_events lets the demo print both model tokens and tool calls as
-    # they happen, making the agent's retrieval step visible.
-    stream = agent_instance.stream_events(
-        {"messages": [{"role": "user", "content": query}]},
-        version="v3",
-    )
-    for kind, item in stream.interleave("messages", "tool_calls"):
-        if kind == "messages":
-            for token in item.text:
-                print(token, end="", flush=True)
-        elif kind == "tool_calls":
-            print(f"\nTool call: {item.tool_name}({item.input})")
-            print(f"Tool result: {item.output}")
-
-    return stream.output
 
 def run_rag_chain(agent_instance):
     query = "What is task decomposition?"
